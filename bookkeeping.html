@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link href="bookkeeping.css" rel="stylesheet" type="text/css">
+    <script type='text/javascript' src='bookkeeping.js'></script>
+    <title>Bookkeeping</title>
+</head>
+<body>
+
+<div class="tab">
+    <button class="tablinks" id='bookkeepingbtn' onclick="switchtab('bookkeeping')">Events and categorization</button>
+    <button class="tablinks" id='balancebtn' onclick="switchtab('balance')">Balance Report</button>
+    <button class="tablinks" id='resultbtn' onclick="switchtab('result')">Result Report</button>
+    <button class="tablinks" id='accountlistbtn' onclick="switchtab('accountlist')">Account List</button>
+    <button class="tablinks" id='accountplanbtn' onclick="switchtab('accountplan')">Account Plan</button>
+</div>
+<div id="bookkeepingdiv" class="tabcontent">
+    <table id="bookkeeping"></table>
+</div>
+<div id="balancediv" class="tabcontent">
+    Balansrapport
+</div>
+<div id="resultdiv" class="tabcontent">
+    Resultatrapport
+</div>
+<div id="accountlistdiv" class="tabcontent">
+    <table id="accountlist"></table>
+</div>
+<div id="accountplandiv" class="tabcontent">
+    <table id="accountplan"></table>
+</div>
+
+<div id="modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header modal-header-bg">
+            <span class="close">&times;</span>
+            <h2 id="modal-header-title">Edit</h2>
+        </div>
+        <div id="modal-body" class="modal-body">
+        </div>
+    </div>
+
+</div>
+</body>
+
+<script>
+    let bookkeepingData;
+
+    let modalRowNumber = 0;
+    const modal = document.getElementById("modal");
+    const span = document.getElementsByClassName("close")[0];
+    span.onclick = function() {
+        closeModal();
+    }
+    window.onclick = function(event) {
+        if (event.target === modal) {
+            closeModal();
+        }
+    }
+    document.body.addEventListener('keydown', e => {
+        if (e.key === "Escape") {
+            closeModal();
+        }
+    });
+    Promise.all([
+        fetch("account_plan.json").then(x => x.text()),
+        fetch("bookkeeping.json").then(x => x.text())
+    ]).then(([accountPlan, bookkeeping]) => {
+        let ap = handleAccountPlan(JSON.parse(accountPlan));
+        let bk = handleBookkeeping(JSON.parse(bookkeeping));
+    });
+    switchtab('bookkeeping');
+
+    function closeModal() {
+        setModalHeader("modal-header modal-header-bg", "Edit");
+        modal.style.display = "none";
+    }
+
+    function setModalHeader(classes, text) {
+        document.getElementsByClassName("modal-header")[0].className = classes;
+        document.getElementById("modal-header-title").innerHTML = text;
+    }
+
+    function save(object) {
+        let sum = 0;
+        let list = [];
+        for (let i = 0; i < modalRowNumber; i++) {
+            let amount = 0;
+            try {
+                amount = +parseFloat(document.getElementById("amountinput" + i).value).toFixed(2);
+            } catch (e) {
+                console.log("ERROR " + i, e);
+            }
+            sum += amount;
+        }
+        if (Math.abs(object.amount) !== sum) {
+            setModalHeader("modal-header modal-header-bg-error", "The amounts don't add up!");
+            return 1;
+        }
+        closeModal();
+        return 0;
+    }
+
+    function validatenum(id) {
+        let input = document.getElementById(id);
+        if (!isNaN(input.value) && !isNaN(parseFloat(input.value))) {
+            input.className = "";
+            return true;
+        }
+        input.className = "input-error";
+        return false;
+    }
+
+    function addBalanceRow(rownum, amount, date, debit, credit) {
+        let d = "", c = "";
+
+        if (debit !== "" && credit !== "") {
+            for (let i = 0; i < document.getElementById("account-plan").childElementCount && (d === "" || c === ""); i++) {
+                let account = document.getElementById("account-plan").childNodes[i].value;
+                if (account.startsWith(debit + " ")) {
+                    d = account;
+                }
+                if (account.startsWith(credit + " ")) {
+                    c = account;
+                }
+            }
+        }
+
+        let btn = document.getElementById("addrowbtn");
+        if (btn) {
+            btn.remove();
+        }
+        function insert(node) {
+            document.getElementById("modal-grid").insertBefore(node, document.getElementById("modal-grid-saverow"));
+        }
+
+        btn = document.createElement("button");
+        btn.id = "addrowbtn";
+        btn.title = "Add row";
+        btn.innerHTML = "➕";
+        btn.onclick = () => addBalanceRow(modalRowNumber++, 0, date);
+
+        let div;
+        div = document.createElement("div");
+        div.className = "modal-grid-addrow";
+        div.appendChild(btn);
+        insert(div);
+
+        div = document.createElement("div");
+        div.className = "modal-grid-label";
+        div.innerHTML = "<label for='amountinput" + rownum + "'>Amount:</label>";
+        insert(div);
+
+        div = document.createElement("div");
+        div.className = "modal-grid-amount";
+        div.innerHTML = "<input type='number' id='amountinput" + rownum + "' name='amount' value='" + amount + "' onfocusout='validatenum(\"amountinput" + rownum + "\")'>";
+        insert(div);
+
+        div = document.createElement("div");
+        div.className = "modal-grid-deblbl";
+        div.innerHTML = "<label for='debit-choice" + rownum + "'>From (debit):</label>";
+        insert(div);
+
+        div = document.createElement("div");
+        div.className = "modal-grid-deb";
+        div.innerHTML = "<input list='account-plan' id='debit-choice" + rownum + "' name='debit-choice' value='" + d + "'/>";
+        insert(div);
+
+        div = document.createElement("div");
+        div.className = "modal-grid-credlbl";
+        div.innerHTML = "<label for='credit-choice" + rownum + "'>To (credit):</label>";
+        insert(div);
+
+        div = document.createElement("div");
+        div.className = "modal-grid-cred";
+        div.innerHTML = "<input list='account-plan' id='credit-choice" + rownum + "' name='credit-choice' value='" + c + "'/>";
+        insert(div);
+
+        div = document.createElement("div");
+        div.className = "modal-grid-datelbl";
+        div.innerHTML = "<label for='dateinput" + rownum + "'>Date:</label>";
+        insert(div);
+
+        div = document.createElement("div");
+        div.className = "modal-grid-date";
+        div.innerHTML = "<input type='text' id='dateinput" + rownum + "' name='date' value='" + date + "'>";
+        insert(div);
+    }
+
+    function handleBookkeeping(data) {
+        bookkeepingData = data;
+        const table = document.getElementById("bookkeeping");
+        const th = document.createElement("tr");
+        th.innerHTML = "<th>Id</th><th>Date</th><th>Amount</th><th>Message</th><th>Text</th><th>Notes</th><th>Edit</th>";
+        table.appendChild(th);
+
+        data.forEach(function(object) {
+            const tr = document.createElement("tr");
+            tr.onclick = () => {
+                let desc = object.description !== undefined ? object.description : (object.notes !== "" ? object.notes : object.message);
+
+                document.getElementById("modal-body").innerHTML =
+                    "<pre>\n" + JSON.stringify(object, null, 2) + "\n</pre>" +
+                    "<div id='modal-grid' class='modal-grid'>" +
+                    "  <div class='modal-grid-addrow'>&nbsp;</div>" +
+                    "  <div class='modal-grid-label'><label for='descinput'>Description:</label></div>" +
+                    "  <div class='modal-grid-desc'> <input type='text' id='descinput' name='desc' value='" + desc + "'></div>" +
+                    "  <div id='modal-grid-saverow' class='modal-grid-saverow'><button id='savebutton'>Save</button></div>" +
+                    "</div>";
+
+                if (!object.balance) {
+                    addBalanceRow(modalRowNumber++, Math.abs(object.amount), object.date, "", "");
+                } else {
+                    object.balance.forEach(b => {
+                        addBalanceRow(modalRowNumber++, b.amount, b.date, b.debit, b.credit);
+                    });
+                }
+                let modal = document.getElementById("modal");
+                modal.style.display = "block";
+
+                document.getElementById("savebutton").onclick = () => save(object);
+                document.getElementById("descinput").focus();
+                document.body.addEventListener('keydown', e => {
+                    if (e.key === "Enter" && document.activeElement !== document.getElementById("addrowbtn") && modal.style.display !== "none") {
+                        save(object);
+                    }
+                });
+            }
+            tr.innerHTML =
+                "<td>" + object.id + "</td>" +
+                "<td>" + object.date + "</td>" +
+                "<td class='" + object.category + "'>" + object.amount + "</td>" +
+                "<td>" + object.message + "</td>" +
+                "<td>" + object.name + "</td>" +
+                "<td>" + (object.description !== undefined ? object.description : object.notes) + "</td>" +
+                "<td>" + (object.description !== undefined ? "✅" : "❌") + "</td>" +
+            "";
+            table.appendChild(tr);
+        });
+
+        return data;
+    }
+
+    function handleAccountPlan(data) {
+        const table = document.getElementById("accountplan");
+        const th = document.createElement("tr");
+        th.innerHTML = "<th>Account Number</th><th>Name</th><th>Account Type</th>";
+        table.appendChild(th);
+
+        const dl = document.createElement("datalist");
+        dl.id = "account-plan";
+        document.body.appendChild(dl);
+
+        data.forEach(function(object) {
+            const tr = document.createElement("tr");
+            tr.innerHTML =
+                "<td>" + object.account_number + "</td>" +
+                "<td>" + object.name + "</td>" +
+                "<td>" + object.account_type + "</td>" +
+                "";
+            table.appendChild(tr);
+
+            const o = document.createElement("option");
+            o.value = object.account_number + " - " + object.name + " (" + object.account_type + ")";
+            dl.appendChild(o);
+        });
+        return data;
+    }
+
+    function switchtab(tabName) {
+        // Get all elements with class="tabcontent" and hide them
+        let tabcontent = document.getElementsByClassName("tabcontent");
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = "none";
+        }
+
+        // Get all elements with class="tablinks" and remove the class "active"
+        let tablinks = document.getElementsByClassName("tablinks");
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(" active", "");
+        }
+
+        // Show the current tab, and add an "active" class to the button that opened the tab
+        document.getElementById(tabName + "div").style.display = "block";
+        document.getElementById(tabName + "btn").className += " active";
+    }
+</script>
+</html>

@@ -1,0 +1,208 @@
+body {
+    font-family: arial, serif;
+}
+
+table {
+    border: darkgray solid 1px;
+    border-spacing: 0;
+}
+
+tr:nth-child(odd) {
+    background-color: lightblue;
+}
+tr:nth-child(even) {
+    background-color: white;
+}
+td, th {
+    padding: 1ex;
+}
+
+.positive {
+    font-family: monospace;
+    font-size: larger;
+    text-align: right;
+}
+.negative {
+    font-family: monospace;
+    font-size: larger;
+    text-align: right;
+    color: red;
+}
+
+
+/* The Modal (background) */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    padding-top: 100px; /* Location of the box */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+/* Modal Content */
+.modal-content {
+    position: relative;
+    background-color: #fefefe;
+    margin: auto;
+    padding: 0;
+    border: 1px solid #888;
+    width: 80%;
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+    -webkit-animation-name: animatetop;
+    -webkit-animation-duration: 0.4s;
+    animation-name: animatetop;
+    animation-duration: 0.4s
+}
+
+/* Add Animation */
+@-webkit-keyframes animatetop {
+    from {top:-300px; opacity:0}
+    to {top:0; opacity:1}
+}
+
+@keyframes animatetop {
+    from {top:-300px; opacity:0}
+    to {top:0; opacity:1}
+}
+
+.close {
+    color: black;
+    float: right;
+    font-size: 32px;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.modal-header {
+    padding: 2px 16px;
+    color: black;
+}
+.modal-header-bg {
+    background-color: lightblue;
+}
+.modal-header-bg-error {
+    background-color: red;
+}
+.input-error {
+    border-color: red;
+}
+
+.modal-body {
+    padding: 1em;
+}
+
+.modal-body pre {
+    padding-bottom: 1em;
+    height: 20em;
+    overflow: scroll;
+}
+
+.modal-grid {
+    gap: 1em;
+    width: 100%;
+    grid-template-columns: 1ex 6em 6em 6em 1fr 6em 1fr 4em 6em;
+    display: grid;
+}
+.modal-grid-addrow {
+    grid-column: 1;
+}
+.modal-grid-addrow a {
+    text-decoration: none;
+}
+.modal-grid-label {
+    grid-column: 2;
+    text-align: right;
+}
+.modal-grid-desc {
+    grid-column: 3/10;
+}
+.modal-grid-amount {
+    grid-column: 3;
+}
+.modal-grid-deblbl {
+    grid-column: 4;
+    text-align: right;
+}
+.modal-grid-deb {
+    grid-column: 5;
+    font-family: monospace;
+}
+.modal-grid-credlbl {
+    grid-column: 6;
+    text-align: right;
+}
+.modal-grid-cred {
+    grid-column: 7;
+    font-family: monospace;
+}
+.modal-grid-datelbl {
+    grid-column: 8;
+    text-align: right;
+}
+.modal-grid-date {
+    grid-column: 9;
+}
+.modal-grid-saverow {
+    grid-column: 9;
+}
+
+#savebutton {
+    width: 100%;
+    background-color: lightblue;
+    border-radius: 1em;
+}
+
+input {
+    width: 100%;
+}
+
+/* Hide arrows from input=Number in Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Hide arrows from input=Number in Firefox */
+input[type=number] {
+    -moz-appearance: textfield;
+}
+
+
+.tab {
+    overflow: hidden;
+    border: 1px solid #ccc;
+    background-color: #f1f1f1;
+}
+.tab button {
+    background-color: inherit;
+    float: left;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 14px 16px;
+    transition: 0.3s;
+}
+.tab button:hover {
+    background-color: #ddd;
+}
+.tab button.active {
+    background-color: #ccc;
+}
+.tabcontent {
+    display: none;
+    border: 1px solid #ccc;
+    border-top: none;
+}
