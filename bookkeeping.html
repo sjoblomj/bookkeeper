@@ -10,11 +10,11 @@
 <body>
 
 <div class="tab">
-    <button class="tablinks" id='bookkeepingbtn' onclick="switchtab('bookkeeping')">Events and categorization</button>
-    <button class="tablinks" id='balancebtn' onclick="switchtab('balance')">Balance Report</button>
-    <button class="tablinks" id='resultbtn' onclick="switchtab('result')">Result Report</button>
-    <button class="tablinks" id='accountlistbtn' onclick="switchtab('accountlist')">Account List</button>
-    <button class="tablinks" id='accountplanbtn' onclick="switchtab('accountplan')">Account Plan</button>
+    <button class="tablinks" id='bookkeepingbtn' data-tab="bookkeeping">Events and categorization</button>
+    <button class="tablinks" id='balancebtn'     data-tab="balance">Balance Report</button>
+    <button class="tablinks" id='resultbtn'      data-tab="result">Result Report</button>
+    <button class="tablinks" id='accountlistbtn' data-tab="accountlist">Account List</button>
+    <button class="tablinks" id='accountplanbtn' data-tab="accountplan">Account Plan</button>
 </div>
 <div id="bookkeepingdiv" class="tabcontent">
     <table id="bookkeeping"></table>

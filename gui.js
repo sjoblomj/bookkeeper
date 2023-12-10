@@ -7,8 +7,8 @@ class Gui {
         this.modalRowNumber = 0;
 
         this.setBindings();
-        this.handleAccountPlan(accountPlanData);
-        this.handleBookkeeping(bookkeepingData);
+        this.handleAccountPlan();
+        this.handleBookkeeping();
     }
 
     setBindings = () => {
@@ -16,7 +16,7 @@ class Gui {
         document.getElementsByClassName("close")[0].onclick = () => {
             gui.closeModal();
         }
-        window.onclick = function(event) {
+        window.onclick = (event) => {
             if (event.target === document.getElementById("modal")) {
                 gui.closeModal();
             }
@@ -71,17 +71,10 @@ class Gui {
     addBalanceRow = (rownum, amount, date, debit, credit) => {
         let d = "", c = "";
 
-        if (debit !== "" && credit !== "") {
-            for (let i = 0; i < document.getElementById("account-plan").childElementCount && (d === "" || c === ""); i++) {
-                let account = document.getElementById("account-plan").childNodes[i].value;
-                if (account.startsWith(debit + " ")) {
-                    d = account;
-                }
-                if (account.startsWith(credit + " ")) {
-                    c = account;
-                }
-            }
-        }
+        if (debit !== "")
+            d = accountPlanNumberToName(debit, this.accountPlanData);
+        if (credit !== "")
+            c = accountPlanNumberToName(credit, this.accountPlanData);
 
         let btn = document.getElementById("addrowbtn");
         if (btn) {
@@ -144,14 +137,14 @@ class Gui {
         insert(div);
     }
 
-    handleBookkeeping = (data) => {
+    handleBookkeeping = () => {
         let gui = this;
         const table = document.getElementById("bookkeeping");
         const th = document.createElement("tr");
         th.innerHTML = "<th>Id</th><th>Date</th><th>Amount</th><th>Message</th><th>Text</th><th>Notes</th><th>Edit</th>";
         table.appendChild(th);
 
-        data.forEach(function(object) {
+        this.bookkeepingData.forEach(function(object) {
             const tr = document.createElement("tr");
             tr.onclick = () => {
                 let desc = object.description !== undefined ? object.description : (object.notes !== "" ? object.notes : object.message);
@@ -194,11 +187,10 @@ class Gui {
                 "";
             table.appendChild(tr);
         });
-
-        return data;
     }
 
-    handleAccountPlan = (data) => {
+    handleAccountPlan = () => {
+        let gui = this;
         const table = document.getElementById("accountplan");
         const th = document.createElement("tr");
         th.innerHTML = "<th>Account Number</th><th>Name</th><th>Account Type</th>";
@@ -208,7 +200,7 @@ class Gui {
         dl.id = "account-plan";
         document.body.appendChild(dl);
 
-        data.forEach(function(object) {
+        gui.accountPlanData.forEach(function(object) {
             const tr = document.createElement("tr");
             tr.innerHTML =
                 "<td>" + object.account_number + "</td>" +
@@ -218,10 +210,9 @@ class Gui {
             table.appendChild(tr);
 
             const o = document.createElement("option");
-            o.value = "accountPlanNumberToName(object.account_number, data)";
+            o.value = accountPlanNumberToName(object.account_number, gui.accountPlanData);
             dl.appendChild(o);
         });
-        return data;
     }
 
     switchtab = (tabName) => {
@@ -249,5 +240,8 @@ Promise.all([
 ]).then(([accountPlan, bookkeeping]) => {
     let gui = new Gui(JSON.parse(bookkeeping), JSON.parse(accountPlan));
     gui.switchtab("bookkeeping");
-    //accountList(bk, ap);
+
+    Array.from(document.getElementsByClassName("tablinks")).forEach(t => {
+        t.onclick = () => gui.switchtab(t.dataset.tab);
+    });
 });
