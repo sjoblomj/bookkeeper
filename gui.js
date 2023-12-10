@@ -222,19 +222,26 @@ class Gui {
         th.innerHTML = "<th>Account</th><th>Debet</th><th>Credit</th>";
         table.appendChild(th);
 
-        let list = accountList(this.bookkeepingData)
-            .map(a => {
-                a.account = accountPlanNumberToName(a.account, this.accountPlanData);
-                return a;
-            });
-
-        list.forEach(object => {
+        accountList(this.bookkeepingData).forEach(object => {
             const tr = document.createElement("tr");
-            tr.innerHTML =
-                "<td>" + object.account + "</td>" +
-                "<td class='numbercell'>" + object.debit + "</td>" +
-                "<td class='numbercell'>" + object.credit + "</td>" +
-                "";
+            let accountName = accountPlanNumberToName(object.account, this.accountPlanData);
+
+            let td = document.createElement("td");
+            td.className = "linkcell";
+            td.innerHTML = accountName;
+            td.onclick = () => console.log(eventsForAccount(this.bookkeepingData, object.account))
+            tr.appendChild(td);
+
+            td = document.createElement("td");
+            td.className = "numbercell";
+            td.innerHTML = object.debit;
+            tr.appendChild(td);
+
+            td = document.createElement("td");
+            td.className = "numbercell";
+            td.innerHTML = object.credit;
+            tr.appendChild(td);
+
             table.appendChild(tr);
         });
     }

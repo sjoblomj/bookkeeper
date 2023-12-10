@@ -42,3 +42,9 @@ function accountList(data) {
             return {"account": account, "debit": debit, "credit": credit};
         });
 }
+
+function eventsForAccount(data, account) {
+    return data
+        .filter(d => d.balance)
+        .filter(d => d.balance.filter(b => b.debit === account || b.credit === account).length > 0);
+}

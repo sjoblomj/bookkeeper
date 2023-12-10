@@ -27,6 +27,11 @@ td, th {
     color: red;
 }
 
+.linkcell {
+    color: blue;
+    text-decoration: underline;
+    cursor: pointer;
+}
 
 /* The Modal (background) */
 .modal {
