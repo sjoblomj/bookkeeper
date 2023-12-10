@@ -9,6 +9,7 @@ class Gui {
         this.setBindings();
         this.handleAccountPlan();
         this.handleBookkeeping();
+        this.handleAccountList();
     }
 
     setBindings = () => {
@@ -179,7 +180,7 @@ class Gui {
             tr.innerHTML =
                 "<td>" + object.id + "</td>" +
                 "<td>" + object.date + "</td>" +
-                "<td class='" + object.category + "'>" + object.amount + "</td>" +
+                "<td class='numbercell " + object.category + "'>" + object.amount + "</td>" +
                 "<td>" + object.message + "</td>" +
                 "<td>" + object.name + "</td>" +
                 "<td>" + (object.description !== undefined ? object.description : object.notes) + "</td>" +
@@ -200,7 +201,7 @@ class Gui {
         dl.id = "account-plan";
         document.body.appendChild(dl);
 
-        gui.accountPlanData.forEach(function(object) {
+        gui.accountPlanData.forEach(object => {
             const tr = document.createElement("tr");
             tr.innerHTML =
                 "<td>" + object.account_number + "</td>" +
@@ -212,6 +213,29 @@ class Gui {
             const o = document.createElement("option");
             o.value = accountPlanNumberToName(object.account_number, gui.accountPlanData);
             dl.appendChild(o);
+        });
+    }
+
+    handleAccountList = () => {
+        const table = document.getElementById("accountlist");
+        const th = document.createElement("tr");
+        th.innerHTML = "<th>Account</th><th>Debet</th><th>Credit</th>";
+        table.appendChild(th);
+
+        let list = accountList(this.bookkeepingData)
+            .map(a => {
+                a.account = accountPlanNumberToName(a.account, this.accountPlanData);
+                return a;
+            });
+
+        list.forEach(object => {
+            const tr = document.createElement("tr");
+            tr.innerHTML =
+                "<td>" + object.account + "</td>" +
+                "<td class='numbercell'>" + object.debit + "</td>" +
+                "<td class='numbercell'>" + object.credit + "</td>" +
+                "";
+            table.appendChild(tr);
         });
     }
 
