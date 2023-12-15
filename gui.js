@@ -1,15 +1,31 @@
 class Gui {
-    bookkeepingData; accountPlanData; modalRowNumber;
+    bookkeepingData; accountPlanData; yearData; modalRowNumber;
 
-    constructor(bookkeepingData, accountPlanData) {
+    formatter = new Intl.NumberFormat('sv-SE', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+
+    constructor(bookkeepingData, accountPlanData, yearData) {
         this.bookkeepingData = bookkeepingData;
         this.accountPlanData = accountPlanData;
+        this.yearData = yearData;
         this.modalRowNumber = 0;
 
         this.setBindings();
         this.handleAccountPlan();
         this.handleBookkeeping();
         this.handleAccountList();
+    }
+
+    createNumberCell = (num, showZero = true, c = "") => {
+        let td = document.createElement("td");
+        td.className = "numbercell " + (c ? c : (num >= 0 ? "positive" : "negative"));
+        if (showZero || num !== 0)
+            td.innerHTML = this.formatter.format(num);
+        else
+            td.innerHTML = "&nbsp;";
+        return td;
     }
 
     setBindings = () => {
@@ -141,6 +157,7 @@ class Gui {
     handleBookkeeping = () => {
         let gui = this;
         const table = document.getElementById("bookkeeping");
+        table.innerHTML = "";
         const th = document.createElement("tr");
         th.innerHTML = "<th>Id</th><th>Date</th><th>Amount</th><th>Message</th><th>Text</th><th>Notes</th><th>Edit</th>";
         table.appendChild(th);
@@ -177,15 +194,31 @@ class Gui {
                     }
                 });
             }
-            tr.innerHTML =
-                "<td>" + object.id + "</td>" +
-                "<td>" + object.date + "</td>" +
-                "<td class='numbercell " + object.category + "'>" + object.amount + "</td>" +
-                "<td>" + object.message + "</td>" +
-                "<td>" + object.name + "</td>" +
-                "<td>" + (object.description !== undefined ? object.description : object.notes) + "</td>" +
-                "<td>" + (object.description !== undefined ? "✅" : "❌") + "</td>" +
-                "";
+            let td = document.createElement("td");
+            td.innerHTML = object.id;
+            tr.appendChild(td);
+            td = document.createElement("td");
+            td.innerHTML = object.date;
+            tr.appendChild(td);
+
+            tr.appendChild(gui.createNumberCell(object.amount));
+
+            td = document.createElement("td");
+            td.innerHTML = object.message;
+            tr.appendChild(td);
+
+            td = document.createElement("td");
+            td.innerHTML = object.name;
+            tr.appendChild(td);
+
+            td = document.createElement("td");
+            td.innerHTML = (object.description !== undefined ? object.description : object.notes);
+            tr.appendChild(td);
+
+            td = document.createElement("td");
+            td.innerHTML = (object.description !== undefined ? "✅" : "❌");
+            tr.appendChild(td);
+
             table.appendChild(tr);
         });
     }
@@ -193,6 +226,7 @@ class Gui {
     handleAccountPlan = () => {
         let gui = this;
         const table = document.getElementById("accountplan");
+        table.innerHTML = "";
         const th = document.createElement("tr");
         th.innerHTML = "<th>Account Number</th><th>Name</th><th>Account Type</th>";
         table.appendChild(th);
@@ -216,31 +250,145 @@ class Gui {
         });
     }
 
-    handleAccountList = () => {
-        const table = document.getElementById("accountlist");
+    handleLedger = (data) => {
+        const table = document.getElementById("ledger");
+        table.innerHTML = "";
         const th = document.createElement("tr");
-        th.innerHTML = "<th>Account</th><th>Debet</th><th>Credit</th>";
+        th.innerHTML = "<th>Date</th><th>Account</th><th>Debet</th><th>Credit</th>";
         table.appendChild(th);
 
-        accountList(this.bookkeepingData).forEach(object => {
+        data.forEach(object => {
+            const tr = document.createElement("tr");
+
+            let td = document.createElement("td");
+            td.innerHTML = object.date;
+            tr.appendChild(td);
+
+            td = document.createElement("td");
+            td.className = "linkcell";
+            td.innerHTML = "V" + object.id + " - " + object.description;
+            td.onclick = () => {
+                this.handleVerification(verifications(this.bookkeepingData, [object.id]));
+                this.switchtab("verification");
+            };
+            tr.appendChild(td);
+
+            tr.appendChild(this.createNumberCell(object.debit, false));
+            tr.appendChild(this.createNumberCell(object.credit, false));
+
+            table.appendChild(tr);
+        });
+    }
+
+    handleVerification = (data) => {
+        const table = document.getElementById("verification");
+        table.innerHTML = "";
+        table.className = "norowalternate";
+        const th = document.createElement("tr");
+        th.innerHTML = "<th>Date</th><th>Account</th><th>Debet</th><th>Credit</th>";
+        table.appendChild(th);
+
+        data.forEach(object => {
+            let tr = document.createElement("tr");
+            tr.className = "mainrow";
+            let td = document.createElement("td");
+            td.innerHTML = object.date;
+            tr.appendChild(td);
+
+            td = document.createElement("td");
+            td.innerHTML = "V" + object.id + " - " + object.description;
+            tr.appendChild(td);
+
+            td = document.createElement("td");
+            td.innerHTML = "&nbsp;";
+            tr.appendChild(td);
+            td = document.createElement("td");
+            td.innerHTML = "&nbsp;";
+            tr.appendChild(td);
+
+            table.appendChild(tr);
+
+            object.balance.forEach(b => {
+                tr = document.createElement("tr");
+                tr.className = "subrow";
+                td = document.createElement("td");
+                td.innerHTML = "&nbsp;";
+                tr.appendChild(td);
+
+                let accountName = accountPlanNumberToName(b.debit, this.accountPlanData);
+                td = document.createElement("td");
+                td.className = "linkcell";
+                td.innerHTML = accountName;
+                td.onclick = () => {
+                    this.handleLedger(eventsForAccount(this.bookkeepingData, b.debit));
+                    this.switchtab("ledger");
+                };
+                tr.appendChild(td);
+
+                tr.appendChild(this.createNumberCell(b.amount));
+                td = document.createElement("td");
+                td.innerHTML = "&nbsp;";
+                tr.appendChild(td);
+
+                table.appendChild(tr);
+
+
+                tr = document.createElement("tr");
+                tr.className = "subrow";
+                td = document.createElement("td");
+                td.innerHTML = "&nbsp;";
+                tr.appendChild(td);
+
+                accountName = accountPlanNumberToName(b.credit, this.accountPlanData);
+                td = document.createElement("td");
+                td.className = "linkcell";
+                td.innerHTML = accountName;
+                td.onclick = () => {
+                    this.handleLedger(eventsForAccount(this.bookkeepingData, b.credit));
+                    this.switchtab("ledger");
+                };
+                tr.appendChild(td);
+
+                td = document.createElement("td");
+                td.innerHTML = "&nbsp;";
+                tr.appendChild(td);
+                tr.appendChild(this.createNumberCell(b.amount));
+
+                table.appendChild(tr);
+            });
+        });
+    }
+
+    handleAccountList = () => {
+        const table = document.getElementById("accountlist");
+        table.innerHTML = "";
+        const th = document.createElement("tr");
+        th.innerHTML = "<th>Account</th><th>Ingoing Balance</th><th>Debet</th><th>Credit</th><th>Outgoing Balance</th>";
+        table.appendChild(th);
+
+        accountList(this.bookkeepingData, this.yearData).forEach(object => {
             const tr = document.createElement("tr");
             let accountName = accountPlanNumberToName(object.account, this.accountPlanData);
 
             let td = document.createElement("td");
             td.className = "linkcell";
             td.innerHTML = accountName;
-            td.onclick = () => console.log(eventsForAccount(this.bookkeepingData, object.account))
+            td.onclick = () => {
+                this.handleLedger(eventsForAccount(this.bookkeepingData, object.account));
+                this.switchtab("ledger");
+            };
             tr.appendChild(td);
 
-            td = document.createElement("td");
-            td.className = "numbercell";
-            td.innerHTML = object.debit;
-            tr.appendChild(td);
+            let ingoingBalance = this.yearData.ingoing_balance
+                .find(i => i.account === object.account)
+                ?.amount || 0;
 
-            td = document.createElement("td");
-            td.className = "numbercell";
-            td.innerHTML = object.credit;
-            tr.appendChild(td);
+            let outgoingBalance = ingoingBalance + object.debit - object.credit;
+
+            tr.appendChild(this.createNumberCell(ingoingBalance));
+            tr.appendChild(this.createNumberCell(object.debit));
+            tr.appendChild(this.createNumberCell(object.credit));
+            tr.appendChild(this.createNumberCell(outgoingBalance));
 
             table.appendChild(tr);
         });
@@ -267,9 +415,10 @@ class Gui {
 
 Promise.all([
     fetch("account_plan.json").then(x => x.text()),
-    fetch("bookkeeping.json").then(x => x.text())
-]).then(([accountPlan, bookkeeping]) => {
-    let gui = new Gui(JSON.parse(bookkeeping), JSON.parse(accountPlan));
+    fetch("bookkeeping.json").then(x => x.text()),
+    fetch("year.json").then(x => x.text()),
+]).then(([accountPlan, bookkeeping, year]) => {
+    let gui = new Gui(JSON.parse(bookkeeping), JSON.parse(accountPlan), JSON.parse(year));
     gui.switchtab("bookkeeping");
 
     Array.from(document.getElementsByClassName("tablinks")).forEach(t => {

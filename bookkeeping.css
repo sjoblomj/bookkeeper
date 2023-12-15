@@ -2,16 +2,58 @@ body {
     font-family: arial, serif;
 }
 
+p {
+    text-align: justify;
+}
+
+.header {
+    display: ruby;
+}
+
+.helpbtn {
+    margin-left: 1em;
+    background-color: lightblue;
+    border-radius: 1em;
+    border-color: black;
+    border-style: solid;
+    border-width: 1px;
+}
+
+.helptxt {
+    z-index: 1;
+    position: absolute;
+    background: white;
+    padding: 1em;
+    border-color: black;
+    border-width: 1px;
+    border-style: solid;
+    border-radius: 1em;
+    max-width: 25em;
+
+    display: none;
+}
+
+.helpbtn:hover + .helptxt {
+    display: block;
+}
+
 table {
     min-width: 40em;
     border: darkgray solid 1px;
     border-spacing: 0;
 }
 
-tr:nth-child(odd) {
+.mainrow {
+    background-color: lightgray;
+}
+.subrow {
+    background-color: white;
+}
+
+table:not(.norowalternate) tr:nth-child(odd) {
     background-color: lightblue;
 }
-tr:nth-child(even) {
+table:not(.norowalternate) tr:nth-child(even) {
     background-color: white;
 }
 td, th {

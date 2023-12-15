@@ -7,10 +7,13 @@ function accountPlanNameToNumber(plan) {
     return plan.substring(0, plan.find(" - "));
 }
 
-function accountList(data) {
-    let allInvolvedAccounts = new Set(data
-        .filter(d => d.balance)
-        .flatMap(d => d.balance.flatMap(b => [b.debit, b.credit])));
+function accountList(data, yearData) {
+    let allInvolvedAccounts = new Set([
+        data
+            .filter(d => d.balance)
+            .flatMap(d => d.balance.flatMap(b => [b.debit, b.credit])),
+        yearData === undefined ? [] : yearData?.ingoing_balance.flatMap(ib => ib.account)
+    ].flat());
 
     function getAmount(debCred, type) {
         return [...allInvolvedAccounts]
@@ -30,7 +33,8 @@ function accountList(data) {
 
     return debits.map((k, i) => [k, credits[i]])
         .map(a => {
-            let debit = 0; credit = 0;
+            let debit = 0;
+            let credit = 0;
             let account = "";
             a.forEach(debcred => {
                 account = debcred.account;
@@ -40,11 +44,35 @@ function accountList(data) {
                     credit = debcred.amount;
             });
             return {"account": account, "debit": debit, "credit": credit};
+        })
+        .sort((a, b) => {
+            if (a.account < b.account)
+                return -1;
+            else if (a.account > b.account)
+                return 1;
+            else
+                return 0;
         });
 }
 
 function eventsForAccount(data, account) {
     return data
         .filter(d => d.balance)
-        .filter(d => d.balance.filter(b => b.debit === account || b.credit === account).length > 0);
+        .filter(d => d.balance.filter(b => b.debit === account || b.credit === account).length > 0)
+        .flatMap(d => {
+            return d.balance.map(dc => {
+                return {
+                    "id": d.id,
+                    "date": dc.date,
+                    "description": d.description,
+                    "debit": dc.debit === account ? dc.amount : 0,
+                    "credit": dc.credit === account ? dc.amount : 0
+                };
+            })
+                .filter(o => !(o.debit === 0 && o.credit === 0))
+        });
+}
+
+function verifications(data, accountList) {
+    return data.filter(d => accountList.includes(d.id));
 }
