@@ -120,8 +120,11 @@ class Gui {
 
         div = document.createElement("div");
         div.className = "modal-grid-amount";
-        div.innerHTML = "<input type='number' id='amountinput" + rownum + "' name='amount' value='" + amount + "' onfocusout='this.validatenum(\"amountinput" + rownum + "\")'>";
+        div.innerHTML = "<input type='number' id='amountinput" + rownum + "' name='amount' value='" + amount + "'>";
         insert(div);
+        document.getElementById("amountinput" + rownum).onblur = () => {
+            this.validatenum("amountinput" + rownum);
+        };
 
         div = document.createElement("div");
         div.className = "modal-grid-deblbl";
