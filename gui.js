@@ -217,13 +217,21 @@ class Gui {
                 let modal = document.getElementById("modal");
                 modal.style.display = "block";
 
-                document.getElementById("savebutton").onclick = () => gui.saveModal(object);
-                document.getElementById("descinput").focus();
-                document.body.addEventListener('keydown', e => {
+                let saveAndRemoveListener = () => {
+                    gui.saveModal(object);
+                    document.body.removeEventListener("keydown", saveFunc);
+                };
+                let saveFunc = e => {
                     if (e.key === "Enter" && document.activeElement !== document.getElementById("addrowbtn") && modal.style.display !== "none") {
-                        gui.saveModal(object);
+                        saveAndRemoveListener();
                     }
-                });
+                }
+
+                document.getElementById("descinput").focus();
+                document.getElementById("savebutton").onclick = () => {
+                    saveAndRemoveListener();
+                }
+                document.body.addEventListener('keydown', saveFunc);
             }
             let td = document.createElement("td");
             td.innerHTML = object.id;
