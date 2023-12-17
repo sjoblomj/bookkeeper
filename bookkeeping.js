@@ -4,7 +4,9 @@ function accountPlanNumberToName(plan, accountPlans) {
         .map(ap => ap.account_number + " - " + ap.name + " (" + ap.account_type + ")")[0];
 }
 function accountPlanNameToNumber(plan) {
-    return plan.substring(0, plan.find(" - "));
+    if (/^\d+$/.test(plan))
+        return plan;
+    return plan.substring(0, plan.search(" - "));
 }
 
 function accountList(data, yearData) {

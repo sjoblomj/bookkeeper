@@ -56,22 +56,49 @@ class Gui {
         document.getElementById("modal-header-title").innerHTML = text;
     }
 
-    save = (object) => {
+    saveModal = (object) => {
+        console.log("about to save id " + object.id)
+        let description = document.getElementById("descinput").value.trim();
+        let balance = [];
+
         let sum = 0;
         for (let i = 0; i < this.modalRowNumber; i++) {
-            let amount = 0;
+            let amount = 0, debit = 0, credit = 0;
+            let date = "";
             try {
                 amount = +parseFloat(document.getElementById("amountinput" + i).value).toFixed(2);
+                debit = Number(accountPlanNameToNumber(document.getElementById("debit-choice" + i).value));
+                credit = Number(accountPlanNameToNumber(document.getElementById("credit-choice" + i).value));
+                date = document.getElementById("dateinput" + i).value.trim();
             } catch (e) {
                 console.log("ERROR " + i, e);
             }
+            balance.push({
+                "date": date,
+                "amount": amount,
+                "debit": debit,
+                "credit": credit
+            })
             sum += amount;
         }
         if (Math.abs(object.amount) !== sum) {
             this.setModalHeader("modal-header modal-header-bg-error", "The amounts don't add up!");
             return 1;
         }
+
+        object.description = description;
+        object.balance = balance;
+
+        this.bookkeepingData = this.bookkeepingData
+            .map(d => {
+                if (d.id === object.id)
+                    return object;
+                return d;
+            })
+
         this.closeModal();
+        this.handleBookkeeping();
+        console.log("saved id " + object.id);
         return 0;
     }
 
@@ -168,6 +195,7 @@ class Gui {
         this.bookkeepingData.forEach(function(object) {
             const tr = document.createElement("tr");
             tr.onclick = () => {
+                gui.modalRowNumber = 0;
                 let desc = object.description !== undefined ? object.description : (object.notes !== "" ? object.notes : object.message);
 
                 document.getElementById("modal-body").innerHTML =
@@ -189,11 +217,11 @@ class Gui {
                 let modal = document.getElementById("modal");
                 modal.style.display = "block";
 
-                document.getElementById("savebutton").onclick = () => gui.save(object);
+                document.getElementById("savebutton").onclick = () => gui.saveModal(object);
                 document.getElementById("descinput").focus();
                 document.body.addEventListener('keydown', e => {
                     if (e.key === "Enter" && document.activeElement !== document.getElementById("addrowbtn") && modal.style.display !== "none") {
-                        gui.save(object);
+                        gui.saveModal(object);
                     }
                 });
             }
@@ -397,6 +425,27 @@ class Gui {
         });
     }
 
+    saveToFile = () => {
+        let data = this.bookkeepingData
+            .filter(d => d.description && d.balance)
+            .map(d => {
+                return {
+                    "id": d.id,
+                    "description": d.description,
+                    "balance": d.balance
+                };
+            });
+
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(new Blob(
+            [JSON.stringify(data)],
+            { type:"text/json"}
+        ));
+        a.download = "accounting.json";
+        a.click();
+        a.remove();
+    }
+
     switchtab = (tabName) => {
         // Get all elements with class="tabcontent" and hide them
         let tabcontent = document.getElementsByClassName("tabcontent");
@@ -427,4 +476,5 @@ Promise.all([
     Array.from(document.getElementsByClassName("tablinks")).forEach(t => {
         t.onclick = () => gui.switchtab(t.dataset.tab);
     });
+    document.getElementById("savebtn").onclick = () => gui.saveToFile();
 });

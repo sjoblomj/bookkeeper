@@ -251,3 +251,13 @@ input[type=number] {
     border: 1px solid #ccc;
     border-top: none;
 }
+
+#savebtn {
+    background-color: #fa6607;
+    color: white;
+    font-weight: bold;
+    margin-left: 5em;
+}
+#savebtn:hover {
+    background-color: #ff8866 !important;
+}
