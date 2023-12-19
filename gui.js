@@ -136,7 +136,7 @@ class Gui {
         return false;
     }
 
-    addBalanceRow = (rownum, amount, date, debit, credit) => {
+    addBalanceRow = (rownum, amount, date, debit = "", credit = "") => {
         let d = "", c = "";
 
         if (debit !== "")
@@ -243,7 +243,7 @@ class Gui {
                     "</div>";
 
                 if (!object.balance) {
-                    gui.addBalanceRow(gui.modalRowNumber++, Math.abs(object.amount), object.date, "", "");
+                    gui.addBalanceRow(gui.modalRowNumber++, Math.abs(object.amount), object.date);
                 } else {
                     object.balance.forEach(b => {
                         gui.addBalanceRow(gui.modalRowNumber++, b.amount, b.date, b.debit, b.credit);
