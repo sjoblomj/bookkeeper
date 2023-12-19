@@ -57,7 +57,6 @@ class Gui {
     }
 
     saveModal = (object) => {
-        console.log("about to save id " + object.id)
         let description = document.getElementById("descinput").value.trim();
         let balance = [];
 
@@ -70,6 +69,14 @@ class Gui {
                 debit = Number(accountPlanNameToNumber(document.getElementById("debit-choice" + i).value));
                 credit = Number(accountPlanNameToNumber(document.getElementById("credit-choice" + i).value));
                 date = document.getElementById("dateinput" + i).value.trim();
+
+                if (!this.validateNumber("amountinput" + i) ||
+                    !this.validateAccount("debit-choice" + i) ||
+                    !this.validateAccount("credit-choice" + i) ||
+                    !this.validateDate("dateinput" + i)
+                ) {
+                    return 1;
+                }
             } catch (e) {
                 console.log("ERROR " + i, e);
             }
@@ -98,13 +105,30 @@ class Gui {
 
         this.closeModal();
         this.handleBookkeeping();
-        console.log("saved id " + object.id);
         return 0;
     }
 
-    validatenum = (id) => {
+    validateNumber = (id) => {
         let input = document.getElementById(id);
-        if (!isNaN(input.value) && !isNaN(parseFloat(input.value))) {
+        if (/^ *([0-9]+)(.[0-9][0-9]?)? *$/.test(input.value)) {
+            input.className = "";
+            return true;
+        }
+        input.className = "input-error";
+        return false;
+    }
+    validateAccount = (id) => {
+        let input = document.getElementById(id);
+        if (/^ *([0-9]{4}).*$/.test(input.value)) {
+            input.className = "";
+            return true;
+        }
+        input.className = "input-error";
+        return false;
+    }
+    validateDate = (id) => {
+        let input = document.getElementById(id);
+        if (/^ *(19[0-9]{2}|20[0-9]{2})-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1]) *$/.test(input.value)) {
             input.className = "";
             return true;
         }
@@ -149,9 +173,6 @@ class Gui {
         div.className = "modal-grid-amount";
         div.innerHTML = "<input type='number' id='amountinput" + rownum + "' name='amount' value='" + amount + "'>";
         insert(div);
-        document.getElementById("amountinput" + rownum).onblur = () => {
-            this.validatenum("amountinput" + rownum);
-        };
 
         div = document.createElement("div");
         div.className = "modal-grid-deblbl";
@@ -182,6 +203,20 @@ class Gui {
         div.className = "modal-grid-date";
         div.innerHTML = "<input type='text' id='dateinput" + rownum + "' name='date' value='" + date + "'>";
         insert(div);
+
+
+        document.getElementById("amountinput" + rownum).onblur = () => {
+            this.validateNumber("amountinput" + rownum);
+        };
+        document.getElementById("credit-choice" + rownum).onblur = () => {
+            this.validateAccount("credit-choice" + rownum);
+        }
+        document.getElementById("debit-choice" + rownum).onblur = () => {
+            this.validateAccount("debit-choice" + rownum);
+        }
+        document.getElementById("dateinput" + rownum).onblur = () => {
+            this.validateDate("dateinput" + rownum);
+        }
     }
 
     handleBookkeeping = () => {
