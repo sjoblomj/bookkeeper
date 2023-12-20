@@ -202,6 +202,35 @@ td, th {
 .modal-grid-saverow {
     grid-column: 9;
 }
+.modal-grid-grouprow {
+    grid-column: 3/9;
+}
+
+.grouped-verifications-modal-grid {
+    gap: 2em;
+    width: 98%;
+    grid-template-columns: 1ex 1fr;
+    display: grid;
+}
+
+.grouped-verifications-modal-grid-addrow {
+    grid-column: 1;
+}
+
+.grouped-verifications-modal-grid-ver {
+    grid-column: 2;
+}
+
+#grouped-verifications-legend {
+    cursor: pointer;
+}
+
+#groupbutton {
+    background: none!important;
+    border: none;
+    font-size: medium;
+    cursor: pointer;
+}
 
 #savebutton {
     width: 100%;

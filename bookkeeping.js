@@ -8,6 +8,11 @@ function accountPlanNameToNumber(plan) {
         return plan;
     return plan.substring(0, plan.search(" - "));
 }
+function verificationNameToNumber(plan) {
+    if (/^([a-zA-Z0-9]+)$/.test(plan))
+        return plan;
+    return plan.substring(0, plan.search(" - "));
+}
 
 function accountList(data, yearData) {
     let allInvolvedAccounts = new Set([
@@ -77,4 +82,34 @@ function eventsForAccount(data, account) {
 
 function verifications(data, accountList) {
     return data.filter(d => accountList.includes(d.id));
+}
+
+function setGroupedVerifications(data, verifications) {
+    verifications = verifications.filter((value, index, array) => array.indexOf(value) === index); // Keep uniques
+
+    function resetGroupedVerifications(id) {
+        for (const d of data) {
+            if (d.id === id) {
+                let vs = d.grouped_verifications;
+                d.grouped_verifications = undefined;
+                if (vs)
+                    vs.forEach(v => resetGroupedVerifications(v.verification));
+            }
+        }
+    }
+    verifications.forEach(v => resetGroupedVerifications(v));
+
+    for (const d of data) {
+        if (verifications.includes(d.id)) {
+            d.grouped_verifications = verifications
+                .filter(v => v !== d.id)
+                .map(v => { return {"verification": v}});
+        }
+    }
+}
+
+function getProcessedVerifications(data) {
+    return data
+        .filter(d => d.balance)
+        .map(d => d.id + " - " + d.description);
 }

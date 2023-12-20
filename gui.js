@@ -1,5 +1,6 @@
 class Gui {
-    bookkeepingData; accountPlanData; yearData; modalRowNumber;
+    bookkeepingData; accountPlanData; yearData;
+    modalRowNumber = 0; modalGroupedVerificationsNumber = 0;
 
     formatter = new Intl.NumberFormat('sv-SE', {
         minimumFractionDigits: 2,
@@ -10,7 +11,6 @@ class Gui {
         this.bookkeepingData = bookkeepingData;
         this.accountPlanData = accountPlanData;
         this.yearData = yearData;
-        this.modalRowNumber = 0;
 
         this.setBindings();
         this.handleAccountPlan();
@@ -60,15 +60,37 @@ class Gui {
         let description = document.getElementById("descinput").value.trim();
         let balance = [];
 
+        let groupedVerifications = [];
+        for (let i = 0; i < this.modalGroupedVerificationsNumber; i++) {
+            let v = document.getElementById("groupedverification" + i).value.trim();
+            if (v === "")
+                continue;
+            if (!this.validateVerification("groupedverification" + i)) {
+                this.setModalHeader("modal-header modal-header-bg-error", "Invalid grouped verification");
+                return 1;
+            }
+            if (verificationNameToNumber(v) === object.id) {
+                this.setModalHeader("modal-header modal-header-bg-error", "Cannot group verification with itself");
+                return 1;
+            }
+            groupedVerifications.push(v);
+        }
+
         let sum = 0;
         for (let i = 0; i < this.modalRowNumber; i++) {
             let amount = 0, debit = 0, credit = 0;
             let date = "";
             try {
-                amount = +parseFloat(document.getElementById("amountinput" + i).value).toFixed(2);
-                debit = Number(accountPlanNameToNumber(document.getElementById("debit-choice" + i).value));
-                credit = Number(accountPlanNameToNumber(document.getElementById("credit-choice" + i).value));
+                let a = document.getElementById("amountinput" + i).value.trim();
+                let d = document.getElementById("debit-choice" + i).value.trim();
+                let c = document.getElementById("credit-choice" + i).value.trim();
                 date = document.getElementById("dateinput" + i).value.trim();
+
+                if ((a === "" || a === "0") && d === "" && c === "" && (date === "" || date === object.date))
+                    continue;
+                amount = +parseFloat(a).toFixed(2);
+                debit = Number(accountPlanNameToNumber(d));
+                credit = Number(accountPlanNameToNumber(c));
 
                 if (!this.validateNumber("amountinput" + i) ||
                     !this.validateAccount("debit-choice" + i) ||
@@ -101,7 +123,14 @@ class Gui {
                 if (d.id === object.id)
                     return object;
                 return d;
-            })
+            });
+
+        if (groupedVerifications.length > 0) {
+            groupedVerifications = groupedVerifications
+                .map(v => verificationNameToNumber(v));
+            groupedVerifications.push(object.id);
+            setGroupedVerifications(this.bookkeepingData, groupedVerifications);
+        }
 
         this.closeModal();
         this.handleBookkeeping();
@@ -135,6 +164,67 @@ class Gui {
         input.className = "input-error";
         return false;
     }
+    validateVerification = (id) => {
+        let input = document.getElementById(id);
+        let processedVerifications = getProcessedVerifications(this.bookkeepingData);
+
+        if (processedVerifications.includes(input.value) ||
+            processedVerifications.map(pv => verificationNameToNumber(pv)).includes(input.value)
+        ) {
+            input.className = "";
+            return true;
+        }
+        input.className = "input-error";
+        return false;
+    }
+
+    addGroupedVerificationsRow = (rownum, verification = "") => {
+
+        let btn = document.getElementById("addgroupedrowbtn");
+        if (btn) {
+            btn.remove();
+        }
+        function insert(node) {
+            document.getElementById("grouped-verifications-modal-grid").appendChild(node);
+        }
+
+        const dl = document.createElement("datalist");
+        dl.id = "verifications";
+        document.body.appendChild(dl);
+
+        let verificationName = "";
+        getProcessedVerifications(this.bookkeepingData).forEach(desc => {
+            const o = document.createElement("option");
+            o.value = desc;
+            dl.appendChild(o);
+
+            if (desc.startsWith(verification + " - "))
+                verificationName = desc;
+        });
+
+
+        btn = document.createElement("button");
+        btn.id = "addgroupedrowbtn";
+        btn.title = "Add row";
+        btn.innerHTML = "➕";
+        btn.onclick = () => this.addGroupedVerificationsRow(this.modalGroupedVerificationsNumber++);
+
+        let div;
+        div = document.createElement("div");
+        div.className = "grouped-verifications-modal-grid-addrow";
+        div.appendChild(btn);
+        insert(div);
+
+        div = document.createElement("div");
+        div.className = "modalgrouped-verifications-modal-grid-ver";
+        div.innerHTML = "<input list='verifications' id='groupedverification" + rownum + "' value='" + verificationName + "'/>";
+        insert(div);
+
+
+        document.getElementById("groupedverification" + rownum).onblur = () => {
+            this.validateVerification("groupedverification" + rownum);
+        }
+    }
 
     addBalanceRow = (rownum, amount, date, debit = "", credit = "") => {
         let d = "", c = "";
@@ -149,7 +239,8 @@ class Gui {
             btn.remove();
         }
         function insert(node) {
-            document.getElementById("modal-grid").insertBefore(node, document.getElementById("modal-grid-saverow"));
+            document.getElementById("modal-grid")
+                .insertBefore(node, document.getElementById("modal-grid-grouprow"));
         }
 
         btn = document.createElement("button");
@@ -231,6 +322,7 @@ class Gui {
             const tr = document.createElement("tr");
             tr.onclick = () => {
                 gui.modalRowNumber = 0;
+                gui.modalGroupedVerificationsNumber = 0;
                 let desc = object.description !== undefined ? object.description : (object.notes !== "" ? object.notes : object.message);
 
                 document.getElementById("modal-body").innerHTML =
@@ -239,8 +331,30 @@ class Gui {
                     "  <div class='modal-grid-addrow'>&nbsp;</div>" +
                     "  <div class='modal-grid-label'><label for='descinput'>Description:</label></div>" +
                     "  <div class='modal-grid-desc'> <input type='text' id='descinput' name='desc' value='" + desc + "'></div>" +
+                    "  <div id='modal-grid-grouprow' class='modal-grid-grouprow'>" +
+                    "    <button id='groupbutton' title='Group verifications'>Group verifications &#9660;</button>" +
+                    "    <fieldset id='grouped-verifications' style='display: none'>" +
+                    "      <legend id='grouped-verifications-legend'>Group verifications &#9650;</legend>" +
+                    "      <p>Verifications belonging together can be grouped below.</p>" +
+                    "      <div id='grouped-verifications-modal-grid' class='grouped-verifications-modal-grid'>" +
+                    "      </div>" +
+                    "    </fieldset>" +
+                    "  </div>" +
                     "  <div id='modal-grid-saverow' class='modal-grid-saverow'><button id='savebutton'>Save</button></div>" +
                     "</div>";
+
+                let showGroupVerifications = () => {
+                    document.getElementById("grouped-verifications").style.display = "block";
+                    document.getElementById("groupbutton").style.display = "none";
+                }
+                document.getElementById("grouped-verifications-legend").onclick = () => {
+                    document.getElementById("grouped-verifications").style.display = "none";
+                    document.getElementById("groupbutton").style.display = "block";
+                }
+                document.getElementById("groupbutton").onclick = () => {
+                    showGroupVerifications();
+                };
+
 
                 if (!object.balance) {
                     gui.addBalanceRow(gui.modalRowNumber++, Math.abs(object.amount), object.date);
@@ -248,6 +362,14 @@ class Gui {
                     object.balance.forEach(b => {
                         gui.addBalanceRow(gui.modalRowNumber++, b.amount, b.date, b.debit, b.credit);
                     });
+                }
+                if (!object.grouped_verifications) {
+                    gui.addGroupedVerificationsRow(gui.modalGroupedVerificationsNumber++);
+                } else {
+                    object.grouped_verifications.forEach(b => {
+                        gui.addGroupedVerificationsRow(gui.modalGroupedVerificationsNumber++, b.verification);
+                    });
+                    showGroupVerifications();
                 }
                 let modal = document.getElementById("modal");
                 modal.style.display = "block";
@@ -257,7 +379,12 @@ class Gui {
                     document.body.removeEventListener("keydown", saveFunc);
                 };
                 let saveFunc = e => {
-                    if (e.key === "Enter" && document.activeElement !== document.getElementById("addrowbtn") && modal.style.display !== "none") {
+                    if (e.key === "Enter" &&
+                        document.activeElement !== document.getElementById("addrowbtn") &&
+                        document.activeElement !== document.getElementById("addgroupedrowbtn") &&
+                        document.activeElement !== document.getElementById("groupbutton") &&
+                        modal.style.display !== "none"
+                    ) {
                         saveAndRemoveListener();
                     }
                 }
@@ -278,11 +405,11 @@ class Gui {
             tr.appendChild(gui.createNumberCell(object.amount));
 
             td = document.createElement("td");
-            td.innerHTML = object.message;
+            td.innerHTML = object.message || "&nbsp;";
             tr.appendChild(td);
 
             td = document.createElement("td");
-            td.innerHTML = object.name;
+            td.innerHTML = object.name || "&nbsp";
             tr.appendChild(td);
 
             td = document.createElement("td");

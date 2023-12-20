@@ -18,7 +18,7 @@ def cap:
   | . / "\n"
   | (.[] | select(length > 0) | . / ";") as $input
   | ($input[2] | gsub(","; ".") | tonumber? // $input[2]) as $amount
-  | {"id": $input[0] | tonumber, "date": $input[1] | gsub("/"; "-"), "amount": $amount, "sender": $input[3], "receiver": $input[4], "name": $input[5] | cap, "more_details": $input[6] | cap, "message": $input[7] | cap, "notes": $input[8], "account_balance": ($input[9] | sub(","; ".") | tonumber? // null), "currency": $input[10], "type": $input[12], "category": (if $amount < 0 then "negative" else "positive" end)}
+  | {"id": $input[0], "date": $input[1] | gsub("/"; "-"), "amount": $amount, "sender": $input[3], "receiver": $input[4], "name": $input[5] | cap, "more_details": $input[6] | cap, "message": $input[7] | cap, "notes": $input[8], "account_balance": ($input[9] | sub(","; ".") | tonumber? // null), "currency": $input[10], "type": $input[12], "category": (if $amount < 0 then "negative" else "positive" end)}
 ]' > plusgiro.json
 
 jq -s 'flatten | group_by(.id) | map(reduce .[] as $x ({}; . * $x))' plusgiro.json accounting.json > bookkeeping.json
