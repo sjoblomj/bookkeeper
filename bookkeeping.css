@@ -10,7 +10,25 @@ p {
     display: ruby;
 }
 
+#addManualVerification {
+    display: inline;
+    position: relative;
+    left: 100%;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    transition: 0.3s;
+    background-color: #f1f1f1;
+    padding: 1em;
+    border-radius: 1em;
+}
+#addManualVerification:hover {
+    background-color: #ddd;
+}
+
+
 .helpbtn {
+    display: inline;
     margin-left: 1em;
     background-color: lightblue;
     border-radius: 1em;

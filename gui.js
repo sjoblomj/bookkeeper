@@ -56,10 +56,11 @@ class Gui {
         document.getElementById("modal-header-title").innerHTML = text;
     }
 
-    saveModal = (object) => {
+    saveVerification = (verification) => {
         let description = document.getElementById("descinput").value.trim();
         let balance = [];
 
+        // Validate Grouped Verifications
         let groupedVerifications = [];
         for (let i = 0; i < this.modalGroupedVerificationsNumber; i++) {
             let v = document.getElementById("groupedverification" + i).value.trim();
@@ -69,13 +70,14 @@ class Gui {
                 this.setModalHeader("modal-header modal-header-bg-error", "Invalid grouped verification");
                 return 1;
             }
-            if (verificationNameToNumber(v) === object.id) {
+            if (verificationNameToNumber(v) === verification.id) {
                 this.setModalHeader("modal-header modal-header-bg-error", "Cannot group verification with itself");
                 return 1;
             }
             groupedVerifications.push(v);
         }
 
+        // Validate input fields
         let sum = 0;
         for (let i = 0; i < this.modalRowNumber; i++) {
             let amount = 0, debit = 0, credit = 0;
@@ -86,7 +88,7 @@ class Gui {
                 let c = document.getElementById("credit-choice" + i).value.trim();
                 date = document.getElementById("dateinput" + i).value.trim();
 
-                if ((a === "" || a === "0") && d === "" && c === "" && (date === "" || date === object.date))
+                if ((a === "" || a === "0") && d === "" && c === "" && (date === "" || date === verification.date))
                     continue;
                 amount = +parseFloat(a).toFixed(2);
                 debit = Number(accountPlanNameToNumber(d));
@@ -110,31 +112,130 @@ class Gui {
             })
             sum += amount;
         }
-        if (Math.abs(object.amount) !== sum) {
+
+        if (verification.amount === undefined) {
+            verification.amount = sum;
+        } else if (Math.abs(verification.amount) !== sum) {
             this.setModalHeader("modal-header modal-header-bg-error", "The amounts don't add up!");
             return 1;
         }
 
-        object.description = description;
-        object.balance = balance;
+        verification.description = description;
+        verification.balance = balance;
 
         this.bookkeepingData = this.bookkeepingData
             .map(d => {
-                if (d.id === object.id)
-                    return object;
+                if (d.id === verification.id)
+                    return verification;
                 return d;
             });
 
         if (groupedVerifications.length > 0) {
             groupedVerifications = groupedVerifications
                 .map(v => verificationNameToNumber(v));
-            groupedVerifications.push(object.id);
+            groupedVerifications.push(verification.id);
             setGroupedVerifications(this.bookkeepingData, groupedVerifications);
         }
 
         this.closeModal();
         this.handleBookkeeping();
         return 0;
+    }
+
+    editVerification = (verification) => {
+        if (verification === undefined) {
+            document.getElementById("modal-header-title").innerHTML = "Add manual verification";
+        } else {
+            document.getElementById("modal-header-title").innerHTML = "Edit verification";
+        }
+
+        this.modalRowNumber = 0;
+        this.modalGroupedVerificationsNumber = 0;
+        let desc = "";
+        if (verification && verification.description)
+            desc = verification.description;
+        else if (verification && verification.notes)
+            desc = verification.notes;
+        else if (verification && verification.message)
+            desc = verification.message;
+
+        let pre = verification ? "<pre>\n" + JSON.stringify(verification, null, 2) + "\n</pre>" : "";
+        document.getElementById("modal-body").innerHTML = pre +
+            "<div id='modal-grid' class='modal-grid'>" +
+            "  <div class='modal-grid-addrow'>&nbsp;</div>" +
+            "  <div class='modal-grid-label'><label for='descinput'>Description:</label></div>" +
+            "  <div class='modal-grid-desc'> <input type='text' id='descinput' name='desc' value='" + desc + "'></div>" +
+            "  <div id='modal-grid-grouprow' class='modal-grid-grouprow'>" +
+            "    <button id='groupbutton' title='Group verifications'>Group verifications &#9660;</button>" +
+            "    <fieldset id='grouped-verifications' style='display: none'>" +
+            "      <legend id='grouped-verifications-legend'>Group verifications &#9650;</legend>" +
+            "      <p>Verifications belonging together can be grouped below.</p>" +
+            "      <div id='grouped-verifications-modal-grid' class='grouped-verifications-modal-grid'>" +
+            "      </div>" +
+            "    </fieldset>" +
+            "  </div>" +
+            "  <div id='modal-grid-saverow' class='modal-grid-saverow'><button id='savebutton'>Save</button></div>" +
+            "</div>";
+
+        let showGroupVerifications = () => {
+            document.getElementById("grouped-verifications").style.display = "block";
+            document.getElementById("groupbutton").style.display = "none";
+        }
+        document.getElementById("grouped-verifications-legend").onclick = () => {
+            document.getElementById("grouped-verifications").style.display = "none";
+            document.getElementById("groupbutton").style.display = "block";
+        }
+        document.getElementById("groupbutton").onclick = () => {
+            showGroupVerifications();
+        };
+
+        if (verification === undefined) {
+            verification = {
+                "id": "M" + getNextManualId(this.bookkeepingData),
+                "date": new Date().toISOString().slice(0, 10),
+                "description": "",
+            };
+            console.log(verification.id)
+        }
+
+        if (!verification.balance) {
+            this.addBalanceRow(this.modalRowNumber++, Math.abs(verification.amount), verification.date);
+        } else {
+            verification.balance.forEach(b => {
+                this.addBalanceRow(this.modalRowNumber++, b.amount, b.date, b.debit, b.credit);
+            });
+        }
+        if (!verification.grouped_verifications) {
+            this.addGroupedVerificationsRow(this.modalGroupedVerificationsNumber++);
+        } else {
+            verification.grouped_verifications.forEach(b => {
+                this.addGroupedVerificationsRow(this.modalGroupedVerificationsNumber++, b.verification);
+            });
+            showGroupVerifications();
+        }
+        let modal = document.getElementById("modal");
+        modal.style.display = "block";
+
+        let saveAndRemoveListener = () => {
+            this.saveVerification(verification);
+            document.body.removeEventListener("keydown", saveFunc);
+        };
+        let saveFunc = e => {
+            if (e.key === "Enter" &&
+                document.activeElement !== document.getElementById("addrowbtn") &&
+                document.activeElement !== document.getElementById("addgroupedrowbtn") &&
+                document.activeElement !== document.getElementById("groupbutton") &&
+                modal.style.display !== "none"
+            ) {
+                saveAndRemoveListener();
+            }
+        }
+
+        document.getElementById("descinput").focus();
+        document.getElementById("savebutton").onclick = () => {
+            saveAndRemoveListener();
+        }
+        document.body.addEventListener('keydown', saveFunc);
     }
 
     validateNumber = (id) => {
@@ -318,106 +419,34 @@ class Gui {
         th.innerHTML = "<th>Id</th><th>Date</th><th>Amount</th><th>Message</th><th>Text</th><th>Notes</th><th>Edit</th>";
         table.appendChild(th);
 
-        this.bookkeepingData.forEach(function(object) {
+        this.bookkeepingData.forEach(function(verification) {
             const tr = document.createElement("tr");
             tr.onclick = () => {
-                gui.modalRowNumber = 0;
-                gui.modalGroupedVerificationsNumber = 0;
-                let desc = object.description !== undefined ? object.description : (object.notes !== "" ? object.notes : object.message);
-
-                document.getElementById("modal-body").innerHTML =
-                    "<pre>\n" + JSON.stringify(object, null, 2) + "\n</pre>" +
-                    "<div id='modal-grid' class='modal-grid'>" +
-                    "  <div class='modal-grid-addrow'>&nbsp;</div>" +
-                    "  <div class='modal-grid-label'><label for='descinput'>Description:</label></div>" +
-                    "  <div class='modal-grid-desc'> <input type='text' id='descinput' name='desc' value='" + desc + "'></div>" +
-                    "  <div id='modal-grid-grouprow' class='modal-grid-grouprow'>" +
-                    "    <button id='groupbutton' title='Group verifications'>Group verifications &#9660;</button>" +
-                    "    <fieldset id='grouped-verifications' style='display: none'>" +
-                    "      <legend id='grouped-verifications-legend'>Group verifications &#9650;</legend>" +
-                    "      <p>Verifications belonging together can be grouped below.</p>" +
-                    "      <div id='grouped-verifications-modal-grid' class='grouped-verifications-modal-grid'>" +
-                    "      </div>" +
-                    "    </fieldset>" +
-                    "  </div>" +
-                    "  <div id='modal-grid-saverow' class='modal-grid-saverow'><button id='savebutton'>Save</button></div>" +
-                    "</div>";
-
-                let showGroupVerifications = () => {
-                    document.getElementById("grouped-verifications").style.display = "block";
-                    document.getElementById("groupbutton").style.display = "none";
-                }
-                document.getElementById("grouped-verifications-legend").onclick = () => {
-                    document.getElementById("grouped-verifications").style.display = "none";
-                    document.getElementById("groupbutton").style.display = "block";
-                }
-                document.getElementById("groupbutton").onclick = () => {
-                    showGroupVerifications();
-                };
-
-
-                if (!object.balance) {
-                    gui.addBalanceRow(gui.modalRowNumber++, Math.abs(object.amount), object.date);
-                } else {
-                    object.balance.forEach(b => {
-                        gui.addBalanceRow(gui.modalRowNumber++, b.amount, b.date, b.debit, b.credit);
-                    });
-                }
-                if (!object.grouped_verifications) {
-                    gui.addGroupedVerificationsRow(gui.modalGroupedVerificationsNumber++);
-                } else {
-                    object.grouped_verifications.forEach(b => {
-                        gui.addGroupedVerificationsRow(gui.modalGroupedVerificationsNumber++, b.verification);
-                    });
-                    showGroupVerifications();
-                }
-                let modal = document.getElementById("modal");
-                modal.style.display = "block";
-
-                let saveAndRemoveListener = () => {
-                    gui.saveModal(object);
-                    document.body.removeEventListener("keydown", saveFunc);
-                };
-                let saveFunc = e => {
-                    if (e.key === "Enter" &&
-                        document.activeElement !== document.getElementById("addrowbtn") &&
-                        document.activeElement !== document.getElementById("addgroupedrowbtn") &&
-                        document.activeElement !== document.getElementById("groupbutton") &&
-                        modal.style.display !== "none"
-                    ) {
-                        saveAndRemoveListener();
-                    }
-                }
-
-                document.getElementById("descinput").focus();
-                document.getElementById("savebutton").onclick = () => {
-                    saveAndRemoveListener();
-                }
-                document.body.addEventListener('keydown', saveFunc);
+                gui.editVerification(verification);
             }
             let td = document.createElement("td");
-            td.innerHTML = object.id;
+            td.innerHTML = verification.id;
             tr.appendChild(td);
             td = document.createElement("td");
-            td.innerHTML = object.date;
+            td.innerHTML = verification.date;
             tr.appendChild(td);
 
-            tr.appendChild(gui.createNumberCell(object.amount));
+            tr.appendChild(gui.createNumberCell(verification.amount));
 
             td = document.createElement("td");
-            td.innerHTML = object.message || "&nbsp;";
-            tr.appendChild(td);
-
-            td = document.createElement("td");
-            td.innerHTML = object.name || "&nbsp";
+            td.innerHTML = verification.message || "&nbsp;";
             tr.appendChild(td);
 
             td = document.createElement("td");
-            td.innerHTML = (object.description !== undefined ? object.description : object.notes);
+            td.innerHTML = verification.name || "&nbsp";
             tr.appendChild(td);
 
             td = document.createElement("td");
-            td.innerHTML = (object.description !== undefined ? "✅" : "❌");
+            td.innerHTML = (verification.description !== undefined ? verification.description : verification.notes);
+            tr.appendChild(td);
+
+            td = document.createElement("td");
+            td.innerHTML = (verification.description !== undefined ? "✅" : "❌");
             tr.appendChild(td);
 
             table.appendChild(tr);
@@ -647,4 +676,5 @@ Promise.all([
         t.onclick = () => gui.switchtab(t.dataset.tab);
     });
     document.getElementById("savebtn").onclick = () => gui.saveToFile();
+    document.getElementById("addManualVerification").onclick = () => gui.editVerification();
 });

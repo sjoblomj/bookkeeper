@@ -113,3 +113,11 @@ function getProcessedVerifications(data) {
         .filter(d => d.balance)
         .map(d => d.id + " - " + d.description);
 }
+
+function getNextManualId(data) {
+    let manualIds = data
+        .filter(d => /^M[0-9]+$/.test(d.id))
+        .map(d => d.id.trim())
+        .map(d => d.substring(1));
+    return 1 + (manualIds.length > 0 ? Math.max(... manualIds) : 0);
+}
