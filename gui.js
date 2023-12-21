@@ -56,6 +56,14 @@ class Gui {
         document.getElementById("modal-header-title").innerHTML = text;
     }
 
+    getVerification = id => {
+        for (const data of this.bookkeepingData) {
+            if (data.id === id)
+                return data;
+        }
+        return undefined;
+    }
+
     saveVerification = (verification) => {
         let description = document.getElementById("descinput").value.trim();
         let balance = [];
@@ -123,12 +131,16 @@ class Gui {
         verification.description = description;
         verification.balance = balance;
 
-        this.bookkeepingData = this.bookkeepingData
-            .map(d => {
-                if (d.id === verification.id)
-                    return verification;
-                return d;
-            });
+        if (this.getVerification(verification.id) === undefined) {
+            this.bookkeepingData.push(verification);
+        } else {
+            this.bookkeepingData = this.bookkeepingData
+                .map(d => {
+                    if (d.id === verification.id)
+                        return verification;
+                    return d;
+                });
+        }
 
         if (groupedVerifications.length > 0) {
             groupedVerifications = groupedVerifications
@@ -146,7 +158,7 @@ class Gui {
         if (verification === undefined) {
             document.getElementById("modal-header-title").innerHTML = "Add manual verification";
         } else {
-            document.getElementById("modal-header-title").innerHTML = "Edit verification";
+            document.getElementById("modal-header-title").innerHTML = "Edit verification " + verification.id;
         }
 
         this.modalRowNumber = 0;
