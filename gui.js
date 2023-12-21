@@ -465,17 +465,17 @@ class Gui {
         dl.id = "account-plan";
         document.body.appendChild(dl);
 
-        gui.accountPlanData.forEach(object => {
+        gui.accountPlanData.forEach(plan => {
             const tr = document.createElement("tr");
             tr.innerHTML =
-                "<td>" + object.account_number + "</td>" +
-                "<td>" + object.name + "</td>" +
-                "<td>" + object.account_type + "</td>" +
+                "<td>" + plan.account_number + "</td>" +
+                "<td>" + plan.name + "</td>" +
+                "<td>" + plan.account_type + "</td>" +
                 "";
             table.appendChild(tr);
 
             const o = document.createElement("option");
-            o.value = accountPlanNumberToName(object.account_number, gui.accountPlanData);
+            o.value = accountPlanNumberToName(plan.account_number, gui.accountPlanData);
             dl.appendChild(o);
         });
     }
@@ -487,24 +487,24 @@ class Gui {
         th.innerHTML = "<th>Date</th><th>Account</th><th>Debet</th><th>Credit</th>";
         table.appendChild(th);
 
-        data.forEach(object => {
+        data.forEach(verification => {
             const tr = document.createElement("tr");
 
             let td = document.createElement("td");
-            td.innerHTML = object.date;
+            td.innerHTML = verification.date;
             tr.appendChild(td);
 
             td = document.createElement("td");
             td.className = "linkcell";
-            td.innerHTML = "V" + object.id + " - " + object.description;
+            td.innerHTML = "V" + verification.id + " - " + verification.description;
             td.onclick = () => {
-                this.handleVerification(verifications(this.bookkeepingData, [object.id]));
+                this.handleVerification(verifications(this.bookkeepingData, [verification.id]));
                 this.switchtab("verification");
             };
             tr.appendChild(td);
 
-            tr.appendChild(this.createNumberCell(object.debit, false));
-            tr.appendChild(this.createNumberCell(object.credit, false));
+            tr.appendChild(this.createNumberCell(verification.debit, false));
+            tr.appendChild(this.createNumberCell(verification.credit, false));
 
             table.appendChild(tr);
         });
@@ -518,15 +518,15 @@ class Gui {
         th.innerHTML = "<th>Date</th><th>Account</th><th>Debet</th><th>Credit</th>";
         table.appendChild(th);
 
-        data.forEach(object => {
+        data.forEach(verification => {
             let tr = document.createElement("tr");
             tr.className = "mainrow";
             let td = document.createElement("td");
-            td.innerHTML = object.date;
+            td.innerHTML = verification.date;
             tr.appendChild(td);
 
             td = document.createElement("td");
-            td.innerHTML = "V" + object.id + " - " + object.description;
+            td.innerHTML = "V" + verification.id + " - " + verification.description;
             tr.appendChild(td);
 
             td = document.createElement("td");
@@ -538,7 +538,7 @@ class Gui {
 
             table.appendChild(tr);
 
-            object.balance.forEach(b => {
+            verification.balance.forEach(b => {
                 tr = document.createElement("tr");
                 tr.className = "subrow";
                 td = document.createElement("td");
@@ -596,28 +596,28 @@ class Gui {
         th.innerHTML = "<th>Account</th><th>Ingoing Balance</th><th>Debet</th><th>Credit</th><th>Outgoing Balance</th>";
         table.appendChild(th);
 
-        accountList(this.bookkeepingData, this.yearData).forEach(object => {
+        accountList(this.bookkeepingData, this.yearData).forEach(verification => {
             const tr = document.createElement("tr");
-            let accountName = accountPlanNumberToName(object.account, this.accountPlanData);
+            let accountName = accountPlanNumberToName(verification.account, this.accountPlanData);
 
             let td = document.createElement("td");
             td.className = "linkcell";
             td.innerHTML = accountName;
             td.onclick = () => {
-                this.handleLedger(eventsForAccount(this.bookkeepingData, object.account));
+                this.handleLedger(eventsForAccount(this.bookkeepingData, verification.account));
                 this.switchtab("ledger");
             };
             tr.appendChild(td);
 
             let ingoingBalance = this.yearData.ingoing_balance
-                .find(i => i.account === object.account)
+                .find(i => i.account === verification.account)
                 ?.amount || 0;
 
-            let outgoingBalance = ingoingBalance + object.debit - object.credit;
+            let outgoingBalance = ingoingBalance + verification.debit - verification.credit;
 
             tr.appendChild(this.createNumberCell(ingoingBalance));
-            tr.appendChild(this.createNumberCell(object.debit));
-            tr.appendChild(this.createNumberCell(object.credit));
+            tr.appendChild(this.createNumberCell(verification.debit));
+            tr.appendChild(this.createNumberCell(verification.credit));
             tr.appendChild(this.createNumberCell(outgoingBalance));
 
             table.appendChild(tr);
