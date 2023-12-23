@@ -21,4 +21,4 @@ def cap:
   | {"id": $input[0], "date": $input[1] | gsub("/"; "-"), "amount": $amount, "sender": $input[3], "receiver": $input[4], "name": $input[5] | cap, "more_details": $input[6] | cap, "message": $input[7] | cap, "notes": $input[8], "account_balance": ($input[9] | sub(","; ".") | tonumber? // null), "currency": $input[10], "type": $input[12], "category": (if $amount < 0 then "negative" else "positive" end)}
 ]' > plusgiro.json
 
-jq -s 'flatten | group_by(.id) | map(reduce .[] as $x ({}; . * $x))' plusgiro.json accounting.json > bookkeeping.json
+jq -s 'flatten | group_by(.id) | map(reduce .[] as $x ({}; . * $x)) | sort_by((.id | tonumber?) // .id)' plusgiro.json accounting.json > bookkeeping.json
