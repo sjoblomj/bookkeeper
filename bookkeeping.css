@@ -68,11 +68,17 @@ table {
     background-color: white;
 }
 
-table:not(.norowalternate) tr:nth-child(odd) {
-    background-color: lightblue;
+.groupedoddrow {
+    background-color: #ababab;
 }
-table:not(.norowalternate) tr:nth-child(even) {
+.groupedevenrow {
+    background-color: lightgrey;
+}
+.oddrow {
     background-color: white;
+}
+.evenrow {
+    background-color: lightblue;
 }
 td, th {
     padding: 1ex;

@@ -1,6 +1,7 @@
 class Gui {
     bookkeepingData; accountPlanData; yearData;
     modalRowNumber = 0; modalGroupedVerificationsNumber = 0;
+    lastRowClass = "";
 
     formatter = new Intl.NumberFormat('sv-SE', {
         minimumFractionDigits: 2,
@@ -423,45 +424,84 @@ class Gui {
         }
     }
 
+    lookupVerification = id => {
+        let v = this.getVerification(id);
+        if (v === undefined)
+            console.log("ERROR: Cannot find id " + id);
+        return v;
+    }
+
+    addBookkeepingRow = (verification, table, isAddingGroupedVerifications = false) => {
+        const tr = document.createElement("tr");
+        tr.onclick = () => {
+            this.editVerification(verification);
+        }
+        if (verification.grouped_verifications) {
+            if (isAddingGroupedVerifications)
+                tr.className = this.lastRowClass;
+            else if (this.lastRowClass === "groupedevenrow")
+                tr.className = this.lastRowClass = "groupedoddrow";
+            else
+                tr.className = this.lastRowClass = "groupedevenrow";
+        } else if (this.lastRowClass === "evenrow")
+            tr.className = this.lastRowClass = "oddrow";
+        else
+            tr.className = this.lastRowClass = "evenrow"
+
+        let date = "";
+        if (verification.date)
+            date = verification.date;
+        else if (verification.balance)
+            date = verification.balance[0].date;
+
+        let amount = "";
+        if (verification.amount)
+            amount = verification.amount;
+        else if (verification.balance)
+            amount = verification.balance.reduce((accumulator, b) => accumulator + b.amount, 0);
+
+        let td = document.createElement("td");
+        td.innerHTML = verification.id;
+        tr.appendChild(td);
+        td = document.createElement("td");
+        td.innerHTML = date;
+        tr.appendChild(td);
+
+        tr.appendChild(this.createNumberCell(amount));
+
+        td = document.createElement("td");
+        td.innerHTML = verification.message || "&nbsp;";
+        tr.appendChild(td);
+
+        td = document.createElement("td");
+        td.innerHTML = verification.name || "&nbsp";
+        tr.appendChild(td);
+
+        td = document.createElement("td");
+        td.innerHTML = (verification.description !== undefined ? verification.description : verification.notes);
+        tr.appendChild(td);
+
+        td = document.createElement("td");
+        td.innerHTML = (verification.description !== undefined ? "✅" : "❌");
+        tr.appendChild(td);
+
+        table.appendChild(tr);
+
+        if (!isAddingGroupedVerifications && verification.grouped_verifications)
+            verification.grouped_verifications
+                .map(v => this.lookupVerification(v.verification))
+                .forEach(v => this.addBookkeepingRow(v, table, true))
+    }
+
     handleBookkeeping = () => {
-        let gui = this;
         const table = document.getElementById("bookkeeping");
         table.innerHTML = "";
         const th = document.createElement("tr");
         th.innerHTML = "<th>Id</th><th>Date</th><th>Amount</th><th>Message</th><th>Text</th><th>Notes</th><th>Edit</th>";
         table.appendChild(th);
 
-        this.bookkeepingData.forEach(function(verification) {
-            const tr = document.createElement("tr");
-            tr.onclick = () => {
-                gui.editVerification(verification);
-            }
-            let td = document.createElement("td");
-            td.innerHTML = verification.id;
-            tr.appendChild(td);
-            td = document.createElement("td");
-            td.innerHTML = verification.date;
-            tr.appendChild(td);
-
-            tr.appendChild(gui.createNumberCell(verification.amount));
-
-            td = document.createElement("td");
-            td.innerHTML = verification.message || "&nbsp;";
-            tr.appendChild(td);
-
-            td = document.createElement("td");
-            td.innerHTML = verification.name || "&nbsp";
-            tr.appendChild(td);
-
-            td = document.createElement("td");
-            td.innerHTML = (verification.description !== undefined ? verification.description : verification.notes);
-            tr.appendChild(td);
-
-            td = document.createElement("td");
-            td.innerHTML = (verification.description !== undefined ? "✅" : "❌");
-            tr.appendChild(td);
-
-            table.appendChild(tr);
+        this.bookkeepingData.forEach(verification => {
+            this.addBookkeepingRow(verification, table);
         });
     }
 
