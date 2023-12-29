@@ -517,8 +517,10 @@ class Gui {
         dl.id = "account-plan";
         document.body.appendChild(dl);
 
+        let i = 0;
         gui.accountPlanData.forEach(plan => {
             const tr = document.createElement("tr");
+            tr.className = i++ % 2 === 0 ? "evenrow" : "oddrow";
             tr.innerHTML =
                 "<td>" + plan.account_number + "</td>" +
                 "<td>" + plan.name + "</td>" +
@@ -539,8 +541,10 @@ class Gui {
         th.innerHTML = "<th>Date</th><th>Account</th><th>Debet</th><th>Credit</th>";
         table.appendChild(th);
 
+        let i = 0;
         data.forEach(verification => {
             const tr = document.createElement("tr");
+            tr.className = i++ % 2 === 0 ? "evenrow" : "oddrow";
 
             let td = document.createElement("td");
             td.innerHTML = verification.date;
@@ -648,8 +652,10 @@ class Gui {
         th.innerHTML = "<th>Account</th><th>Ingoing Balance</th><th>Debet</th><th>Credit</th><th>Outgoing Balance</th>";
         table.appendChild(th);
 
+        let i = 0;
         accountList(this.bookkeepingData, this.yearData).forEach(verification => {
             const tr = document.createElement("tr");
+            tr.className = i++ % 2 === 0 ? "evenrow" : "oddrow";
             let accountName = accountPlanNumberToName(verification.account, this.accountPlanData);
 
             let td = document.createElement("td");
