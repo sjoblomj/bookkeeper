@@ -683,7 +683,8 @@ class Gui {
                 return {
                     "id": d.id,
                     "description": d.description,
-                    "balance": d.balance
+                    "balance": d.balance,
+                    "grouped_verifications": d.grouped_verifications
                 };
             });
 
