@@ -578,7 +578,7 @@ class Gui {
             let tr = document.createElement("tr");
             tr.className = "mainrow";
             let td = document.createElement("td");
-            td.innerHTML = verification.date;
+            td.innerHTML = verification.date ? verification.date : verification.balance[0].date;
             tr.appendChild(td);
 
             td = document.createElement("td");
