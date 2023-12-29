@@ -7,13 +7,12 @@ p {
 }
 
 .header {
-    display: ruby;
+    display: flex;
+    align-items: center;
 }
 
 #addManualVerification {
-    display: inline;
-    position: relative;
-    left: 100%;
+    margin-left: 10%;
     border: none;
     outline: none;
     cursor: pointer;
@@ -28,7 +27,9 @@ p {
 
 
 .helpbtn {
-    display: inline;
+    aspect-ratio: 1 / 1;
+    width: 3ex;
+    text-align: center;
     margin-left: 1em;
     background-color: lightblue;
     border-radius: 1em;
