@@ -62,6 +62,14 @@ table {
     border-spacing: 0;
 }
 
+.accountgrouprow, .sumrow {
+    background-color: rgba(211, 211, 211, 0.5);
+    font-weight: bold;
+}
+.accountclassrow {
+    background-color: #ababab;
+    font-weight: bolder;
+}
 .mainrow {
     background-color: lightgray;
 }

@@ -14,6 +14,33 @@ function verificationNameToNumber(plan) {
     return plan.substring(0, plan.search(" - "));
 }
 
+function balanceReport(data, yearData) {
+    return balanceAndResultReport(data, yearData, "balance");
+}
+function resultReport(data, yearData) {
+    return balanceAndResultReport(data, yearData, "result");
+}
+
+function balanceAndResultReport(data, yearData, type) {
+    return accountList(data, yearData)
+        .filter(v => type === "result" ? v.account >= 3000 : v.account < 3000)
+        .map(v => {
+            let cat = categoriseAccount(v.account);
+            let ib = yearData.ingoing_balance
+                .find(i => i.account === v.account)
+                ?.amount || 0;
+            return {
+                "account": v.account,
+                "account_class": cat.account_class,
+                "account_group": cat.account_group,
+                "debit": v.debit,
+                "credit": v.credit,
+                "period": type === "result" ? v.credit - v.debit : v.debit - v.credit,
+                "ingoing_balance": ib
+            };
+        });
+}
+
 function accountList(data, yearData) {
     let allInvolvedAccounts = new Set([
         data

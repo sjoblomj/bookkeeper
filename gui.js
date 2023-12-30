@@ -14,6 +14,8 @@ class Gui {
         this.yearData = yearData;
 
         this.setBindings();
+        this.handleBalanceReport();
+        this.handleResultReport();
         this.handleAccountPlan();
         this.handleBookkeeping();
         this.handleAccountList();
@@ -208,7 +210,6 @@ class Gui {
                 "date": new Date().toISOString().slice(0, 10),
                 "description": "",
             };
-            console.log(verification.id)
         }
 
         if (!verification.balance) {
@@ -507,6 +508,132 @@ class Gui {
         this.bookkeepingData.forEach(verification => {
             this.addBookkeepingRow(verification, table);
         });
+    }
+
+    addMainRow = (table, columns, trClassName = "", indentation = 0) => {
+        let isMultiColumn = columns.slice(1).every(c => c === "");
+        let tr = document.createElement("tr");
+        tr.className = trClassName;
+
+        let td = document.createElement("td");
+        td.innerHTML = columns[0];
+        td.colSpan = isMultiColumn ? columns.length : 1;
+        td.style.textIndent = indentation + "em";
+        tr.appendChild(td);
+
+        if (!isMultiColumn)
+            columns.slice(1).forEach(c => tr.appendChild(this.createNumberCell(c)));
+
+        table.appendChild(tr);
+    }
+
+    handleBalanceReport = () => {
+        const table = document.getElementById("balancereport");
+        table.innerHTML = "";
+        const th = document.createElement("tr");
+        th.innerHTML = "<th>Account</th><th>Ingoing balance</th><th>Period</th><th>Outgoing balance</th>";
+        table.appendChild(th);
+
+        let prevClass = "";
+        let prevGroup = "";
+        let i = 0;
+        let sum = [0, 0, 0];
+        balanceReport(this.bookkeepingData, this.yearData)
+            .forEach(verification => {
+
+                if (verification.account_group !== prevGroup && prevGroup !== "") {
+                    this.addMainRow(table, ["Sum of " + prevGroup, sum[0], sum[1], sum[2]], "sumrow", 1);
+                    this.addMainRow(table, ["&nbsp;", "", "", ""]);
+                }
+                if (verification.account_class !== prevClass) {
+                    prevClass = verification.account_class;
+                    this.addMainRow(table, [prevClass, "", "", ""], "accountclassrow");
+                }
+                if (verification.account_group !== prevGroup) {
+                    i = 0;
+                    prevGroup = verification.account_group;
+                    this.addMainRow(table, [prevGroup, "", "", ""], "accountgrouprow", 1);
+                    sum = [0, 0, 0];
+                }
+
+                let tr = document.createElement("tr");
+                tr.className = i++ % 2 === 0 ? "evenrow" : "oddrow";
+                let accountName = accountPlanNumberToName(verification.account, this.accountPlanData);
+
+                let td = document.createElement("td");
+                td.className = "linkcell";
+                td.innerHTML = accountName;
+                td.style.textIndent = "2em";
+                td.onclick = () => {
+                    this.handleLedger(eventsForAccount(this.bookkeepingData, verification.account));
+                    this.switchtab("ledger");
+                };
+                tr.appendChild(td);
+
+                let ingoingBalance = verification.ingoing_balance;
+                let period = verification.period;
+                let outgoingBalance = verification.ingoing_balance + period;
+                sum[0] += ingoingBalance;
+                sum[1] += period;
+                sum[2] += outgoingBalance;
+
+                tr.appendChild(this.createNumberCell(ingoingBalance));
+                tr.appendChild(this.createNumberCell(period));
+                tr.appendChild(this.createNumberCell(outgoingBalance));
+                table.appendChild(tr);
+            });
+        this.addMainRow(table, ["Sum of " + prevGroup, sum[0], sum[1], sum[2]], "sumrow", 1);
+    }
+
+    handleResultReport = () => {
+        const table = document.getElementById("resultreport");
+        table.innerHTML = "";
+        const th = document.createElement("tr");
+        th.innerHTML = "<th>Account</th><th>Period</th>";
+        table.appendChild(th);
+
+        let prevClass = "";
+        let prevGroup = "";
+        let i = 0;
+        let sum = 0;
+        resultReport(this.bookkeepingData, this.yearData)
+            .forEach(verification => {
+
+                if (verification.account_group !== prevGroup && prevGroup !== "") {
+                    this.addMainRow(table, ["Sum of " + prevGroup, sum], "sumrow", 1);
+                    this.addMainRow(table, ["&nbsp;", ""]);
+                }
+                if (verification.account_class !== prevClass) {
+                    prevClass = verification.account_class;
+                    this.addMainRow(table, [prevClass, ""], "accountclassrow");
+                }
+                if (verification.account_group !== prevGroup) {
+                    i = 0;
+                    prevGroup = verification.account_group;
+                    this.addMainRow(table, [prevGroup, ""], "accountgrouprow", 1);
+                    sum = 0;
+                }
+
+                let tr = document.createElement("tr");
+                tr.className = i++ % 2 === 0 ? "evenrow" : "oddrow";
+                let accountName = accountPlanNumberToName(verification.account, this.accountPlanData);
+
+                let td = document.createElement("td");
+                td.className = "linkcell";
+                td.innerHTML = accountName;
+                td.style.textIndent = "2em";
+                td.onclick = () => {
+                    this.handleLedger(eventsForAccount(this.bookkeepingData, verification.account));
+                    this.switchtab("ledger");
+                };
+                tr.appendChild(td);
+
+                sum += verification.period;
+
+                tr.appendChild(this.createNumberCell(verification.period));
+                table.appendChild(tr);
+        });
+        this.addMainRow(table, ["Sum of " + prevGroup, sum], "sumrow", 1);
     }
 
     handleAccountPlan = () => {
