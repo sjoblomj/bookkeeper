@@ -230,8 +230,9 @@ class Gui {
         modal.style.display = "block";
 
         let saveAndRemoveListener = () => {
-            this.saveVerification(verification);
-            document.body.removeEventListener("keydown", saveFunc);
+            if (this.saveVerification(verification) === 0) {
+                document.body.removeEventListener("keydown", saveFunc);
+            }
         };
         let saveFunc = e => {
             if (e.key === "Enter" &&
