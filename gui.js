@@ -302,7 +302,10 @@ class Gui {
             document.getElementById("grouped-verifications-modal-grid").appendChild(node);
         }
 
-        const dl = document.createElement("datalist");
+        let dl = document.getElementById("verifications");
+        if (dl)
+            dl.remove();
+        dl = document.createElement("datalist");
         dl.id = "verifications";
         document.body.appendChild(dl);
 
