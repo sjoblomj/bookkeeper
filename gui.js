@@ -14,11 +14,6 @@ class Gui {
         this.yearData = yearData;
 
         this.setBindings();
-        this.handleBalanceReport();
-        this.handleResultReport();
-        this.handleAccountPlan();
-        this.handleBookkeeping();
-        this.handleAccountList();
     }
 
     createNumberCell = (num, showZero = true, c = "") => {
@@ -836,6 +831,23 @@ class Gui {
     }
 
     switchtab = (tabName) => {
+        if (tabName === "bookkeeping") {
+            this.handleBookkeeping();
+        } else if (tabName === "balance") {
+            this.handleBalanceReport();
+        } else if (tabName === "result") {
+            this.handleResultReport();
+        } else if (tabName === "accountlist") {
+            this.handleAccountList();
+        } else if (tabName === "ledger") {
+            // TODO
+        } else if (tabName === "verification") {
+            // TODO
+        } else if (tabName === "accountplan") {
+            this.handleAccountPlan();
+        }
+
+
         // Get all elements with class="tabcontent" and hide them
         let tabcontent = document.getElementsByClassName("tabcontent");
         for (let i = 0; i < tabcontent.length; i++) {
