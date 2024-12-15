@@ -631,6 +631,19 @@ class Gui {
         this.addMainRow(table, ["Sum of " + prevGroup, sum], "sumrow", 1);
     }
 
+    populateAccountPlan = () => {
+        let gui = this;
+        const dl = document.createElement("datalist");
+        dl.id = "account-plan";
+        document.body.appendChild(dl);
+
+        gui.accountPlanData.forEach(plan => {
+            const o = document.createElement("option");
+            o.value = accountPlanNumberToName(plan.account_number, gui.accountPlanData);
+            dl.appendChild(o);
+        });
+    }
+
     handleAccountPlan = () => {
         let gui = this;
         const table = document.getElementById("accountplan");
@@ -638,10 +651,6 @@ class Gui {
         const th = document.createElement("tr");
         th.innerHTML = "<th>Account Number</th><th>Name</th><th>Account Type</th>";
         table.appendChild(th);
-
-        const dl = document.createElement("datalist");
-        dl.id = "account-plan";
-        document.body.appendChild(dl);
 
         let i = 0;
         gui.accountPlanData.forEach(plan => {
@@ -653,10 +662,6 @@ class Gui {
                 "<td>" + plan.account_type + "</td>" +
                 "";
             table.appendChild(tr);
-
-            const o = document.createElement("option");
-            o.value = accountPlanNumberToName(plan.account_number, gui.accountPlanData);
-            dl.appendChild(o);
         });
     }
 
@@ -872,6 +877,7 @@ Promise.all([
     fetch("year.json").then(x => x.text()),
 ]).then(([accountPlan, bookkeeping, year]) => {
     let gui = new Gui(JSON.parse(bookkeeping), JSON.parse(accountPlan), JSON.parse(year));
+    gui.populateAccountPlan();
     gui.switchtab("bookkeeping");
 
     Array.from(document.getElementsByClassName("tablinks")).forEach(t => {
