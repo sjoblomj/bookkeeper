@@ -2,6 +2,7 @@ class Gui {
     bookkeepingData; accountPlanData; yearData;
     modalRowNumber = 0; modalGroupedVerificationsNumber = 0;
     lastRowClass = "";
+    lastOpenVerification = null;
 
     formatter = new Intl.NumberFormat('sv-SE', {
         minimumFractionDigits: 2,
@@ -153,6 +154,7 @@ class Gui {
     }
 
     editVerification = (verification) => {
+        this.lastOpenVerification = verification;
         if (verification === undefined) {
             document.getElementById("modal-header-title").innerHTML = "Add manual verification";
         } else {
@@ -205,6 +207,7 @@ class Gui {
                 "date": new Date().toISOString().slice(0, 10),
                 "description": "",
             };
+            this.lastOpenVerification = verification;
         }
 
         if (!verification.balance) {
@@ -226,7 +229,7 @@ class Gui {
         modal.style.display = "block";
 
         let saveAndRemoveListener = () => {
-            if (this.saveVerification(verification) === 0) {
+            if (this.saveVerification(this.lastOpenVerification) === 0) {
                 document.body.removeEventListener("keydown", saveFunc);
             }
         };
